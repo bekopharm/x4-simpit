@@ -1,0 +1,40 @@
+from X4_Python_Pipe_Server import Pipe_Server
+
+# TODO: Test if this works and makes sense on Windows
+# Probably needs adjustments 🤷
+# This file is Windows only. The Linux variant does not use
+# this so I have no test or use case. -- beko
+#
+# development options
+# enable it to write received data to a file
+isDevelopment = False
+dataOutputFilename = "x4_simpit.json"
+
+# pipe names
+pipeInName = 'x4_python_client'
+pipeOutName = 'x4_python_host'
+
+def main(args):
+
+    print('###: Starting X4 Simulated_Cockpit module')
+
+    # start pipe to X4 game
+    pipeIn = Pipe_Server(pipeInName)
+    pipeIn.Connect()
+    print('###: Created '+ pipeInName +' pipe.')
+
+    # start pipe to Node.js
+    pipeOut = Pipe_Server(pipeOutName)
+    pipeOut.Connect()
+    print('###: Created '+ pipeOutName +' pipe.')
+
+    while 1:
+        message = pipeIn.Read()
+
+        # development purpose - save to file
+        if isDevelopment:
+            f = open(dataOutputFilename, "w", encoding='utf-8')
+            f.write(message)
+            f.close()
+
+        pipeOut.Write(message)

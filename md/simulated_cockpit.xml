@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mdscript name="SimulatedCockpit" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://mycu.kylos.pl/md.xsd">
+    <cues>
+        <!--TODO: find out how referencing this works-->
+        <library name="Lib_Simpit_Get">
+            <param name="module" default="Status"/>
+            <actions>
+                <debug_text text="'SimPit: SimPit_Get_' + $module" chance="$debugchance"/>
+                <set_value name="$logfile" exact="'SimPit-' + md.$SystemTimeAtGamestart"/>
+                <debug_to_file name="$logfile" directory="'SimPit'" text="'SimPit_Get_Ship' + $module +': ' + player.target" output="false" append="true" />
+                <raise_lua_event name="'simPit.get'" param="$module" />
+            </actions>
+        </library>
+        <cue name="OnLuaLoaderReady">
+            <conditions>
+                <event_ui_triggered screen="'Lua_Loader'" control="'Ready'"/>
+            </conditions>
+            <actions>
+                <set_value name="$logfile" exact="'SimPit-' + md.$SystemTimeAtGamestart"/>
+                <debug_to_file name="$logfile" directory="'SimPit'" text="'OnLuaLoaderReady'" output="false" append="true" />
+                <debug_text text="'OnLuaLoaderReady'"/>
+                <raise_lua_event name="'Lua_Loader.Load'" param="'extensions.simpit.lua.Simulated_Cockpit'"/>
+            </actions>
+        </cue>
+        <cue name="OnLuaLoaderReadyCompleted">
+            <conditions>
+                <event_cue_completed cue="OnLuaLoaderReady"/>
+            </conditions>
+            <actions>
+                <set_value name="$logfile" exact="'SimPit-' + md.$SystemTimeAtGamestart"/>
+                <debug_to_file name="$logfile" directory="'SimPit'" text="'OnLuaLoaderReadyCompleted'" output="false" append="true" />
+                <debug_text text="'OnLuaLoaderReadyCompleted'"/>
+                <reset_cue cue="OnLuaLoaderReady"/>
+                <reset_cue cue="this"/>
+            </actions>
+        </cue>
+        <cue name="SimPit_Main">
+            <conditions>
+                <check_any>
+                    <event_cue_signalled cue="md.Setup.GameStart"/>
+                    <event_game_loaded/>
+                </check_any>
+            </conditions>
+            <actions>
+                <set_value name="$debugchance" exact="0"/>
+                <set_value name="$logfile" exact="'SimPit-' + md.$SystemTimeAtGamestart"/>
+                <debug_to_file name="$logfile" directory="'SimPit'" text="'Game was started/reloaded'" output="false" append="true" />
+                <debug_text text="'Game was started/reloaded'"/>
+            </actions>
+            <cues>
+                <cue name="SimPit_writeMessages" instantiate="true">
+                    <conditions>
+                        <event_ui_triggered screen="'simPit.write'" control="'data_feed'"/>
+                    </conditions>
+                    <actions>
+                        <debug_text text="'SimPit: SimPit_writeMessages '" chance="$debugchance"/>
+                        <set_value name="$data" exact="event.param3"/>
+                        <debug_text text="'SimPit: $data ' + $data" chance="$debugchance"/>
+                        <signal_cue_instantly cue="md.Named_Pipes.Write" param="table[$pipe='x4_python_host', $msg=$data]"/>
+                    </actions>
+                </cue>
+                <!-- FIXME: this triggers _very often_ on /reloadui - why?? -->
+                <!-- https://elite-journal.readthedocs.io/en/latest/Startup/#commander -->
+                <cue name="SimPit_Get_Commander" instantiate="true">
+                    <conditions>
+                        <check_any>
+                            <event_cue_signalled cue="md.Setup.GameStart"/>
+                            <event_cue_signalled cue="md.Pipe_Server_Host.Reloaded"/>
+                            <event_game_loaded/>
+                        </check_any>
+                    </conditions>
+                    <!-- Give the pipe some time to reconnect --> 
+                    <delay min="10s" max="20s"/>
+                    <actions>
+                        <debug_text text="'SimPit: SimPit_Get_Commander '" chance="$debugchance"/>
+                        <raise_lua_event name="'simPit.get'" param="'Commander'" />
+                    </actions>
+                </cue>
+                <!-- https://elite-journal.readthedocs.io/en/latest/Status%20File/ -->
+                <!-- Written _very often_ because it holds vital ship data -->
+                <cue name="SimPit_Get_Status" instantiate="true" checkinterval="20ms">
+                    <actions>
+                        <debug_text text="'SimPit: SimPit_Get_Status '" chance="$debugchance"/>
+                        <raise_lua_event name="'simPit.get'" param="'Status'" />
+                    </actions>
+                </cue>
+                <!--
+                <cue name="SimPit_Get_ShipTargeted_Two" instantiate="true" checkinterval="30ms">
+                    <actions>
+                        <debug_text text="'SimPit: SimPit_Get_ShipTargeted '" chance="$debugchance"/>
+                        <raise_lua_event name="'simPit.get'" param="'ShipTargeted'" />
+                    </actions>
+                </cue>
+                -->
+                <cue name="SimPit_Get_Loadout" instantiate="true" >
+                    <conditions>
+                        <check_any>
+                            <event_player_started_control/>
+                            <event_game_loaded/>
+                        </check_any>
+                    </conditions>
+                    <actions>
+                        <debug_text text="'Player changed ship ' + player.ship" chance="100"/>
+                        <raise_lua_event name="'simPit.get'" param="'Loadout'" />
+                    </actions>
+                </cue>
+                <!-- https://www.egosoft.com:8444/confluence/display/XRWIKI/Mission+Director+Guide -->
+                <!-- https://elite-journal.readthedocs.io/en/latest/Combat/#shiptargetted -->
+                <cue name="SimPit_Get_ShipTargeted" instantiate="true">
+                    <conditions>
+                        <event_player_changed_target/>
+                    </conditions>
+                    <!-- Repeat -->
+                    <actions>
+                        <set_value name="$target" exact="player.target"/>
+                        <do_if value="player.target">
+                            <debug_text text="'Selected new target ' + player.target" chance="$debugchance"/>
+                        </do_if>
+                        <do_else>
+                            <!--target deselected, final read -->
+                            <debug_text text="'No more target'" chance="$debugchance"/>
+                        </do_else>
+                    </actions>
+                    <cues>
+                        <!-- This should instance and check with interval until target becomes null when this -->
+                        <!-- cancels itself after a final read (to get empty targetting data) -->
+                        <!-- FIXME: this does not work if target only changes and spawns new instances -->
+                        <!-- It only deactivates all when targets gets nulled !!-->
+                        <cue name="SimPit_Get_ShipTargeted_Repeat" instantiate="true" onfail="cancel" checkinterval="20ms">
+                            <conditions>
+                                <check_value value="$target != null"/>
+                            </conditions>
+                            <delay exact="1ms" />
+                            <actions>
+                                <do_if value="($target and $last_target == null) or ($target and $last_target == $target)">
+                                    <!--target exists, keep read -->
+                                    <debug_text text="'Going ONLINE '" chance="$debugchance"/>
+                                    <raise_lua_event name="'simPit.get'" param="'ShipTargeted'" />
+                                </do_if>
+                                <do_else>
+                                    <debug_text text="'Going OFFLINE'" chance="$debugchance"/>
+                                    <raise_lua_event name="'simPit.get'" param="'ShipTargeted'" />
+                                    <cancel_cue cue="this"/>
+                                </do_else>
+                                <set_value name="$last_target" exact="$target"/>
+                            </actions>
+                        </cue>
+                    </cues>
+                </cue>
+                
+            </cues>
+        </cue>
+        <cue name="Server_Reader_Wrapper">
+            <cues>
+                <cue name="Server_Reader" ref="md.Pipe_Server_Lib.Server_Reader">
+                    <param name="Actions_On_Reload" value="Actions_On_Reload"/>
+                    <param name="Actions_On_Connect" value="Actions_On_Connect"/>
+                    <param name="Actions_On_Read" value="Actions_On_Read"/>
+                </cue>
+            </cues>
+        </cue>
+        <library name="Actions_On_Reload">
+            <actions>
+                <set_value name="$Pipe_Name" exact="'x4_python_host'"/>
+            </actions>
+        </library>
+        <library name="Actions_On_Connect">
+            <actions>
+                <signal_cue cue="$Start_Reading"/>
+            </actions>
+        </library>
+        <library name="Actions_On_Read">
+            <actions>
+                <debug_text text="'SimPit: Received message: %s.'.[event.param]" chance="$debugchance" filter="general"/>
+            </actions>
+        </library>
+    </cues>
+</mdscript>

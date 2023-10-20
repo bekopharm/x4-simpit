@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<content id="SimPit"
+         name="Simulated Cockpit Telemetry"
+         author="BekoPharm"
+         version="1"
+         license="MIT"
+         date="2023-03-27"
+         save="false"
+         enabled="1"
+         description="Get ship telemetry data to connect to your home cockpit">
+    <dependency id="ws_2042901274" optional="false" name="SirNukes Mod Support APIs"/>
+</content>

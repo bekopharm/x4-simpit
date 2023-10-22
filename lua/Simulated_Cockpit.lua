@@ -83,6 +83,7 @@ function SimPit.new()
             data.timestamp = GetDate('%Y-%m-%dT%XZ')
             
             local result = toJSON(data)
+            result = result .. "\n"
             DebugError("DATA: ", result)
             return result
             -- return table.concat(output)

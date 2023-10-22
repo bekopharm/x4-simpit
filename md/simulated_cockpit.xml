@@ -19,7 +19,7 @@
                 <set_value name="$logfile" exact="'SimPit-' + md.$SystemTimeAtGamestart"/>
                 <debug_to_file name="$logfile" directory="'SimPit'" text="'OnLuaLoaderReady'" output="false" append="true" />
                 <debug_text text="'OnLuaLoaderReady'"/>
-                <raise_lua_event name="'Lua_Loader.Load'" param="'extensions.simpit.lua.Simulated_Cockpit'"/>
+                <raise_lua_event name="'Lua_Loader.Load'" param="'extensions.x4-simpit.lua.Simulated_Cockpit'"/>
             </actions>
         </cue>
         <cue name="OnLuaLoaderReadyCompleted">
@@ -32,6 +32,17 @@
                 <debug_text text="'OnLuaLoaderReadyCompleted'"/>
                 <reset_cue cue="OnLuaLoaderReady"/>
                 <reset_cue cue="this"/>
+            </actions>
+        </cue>
+                <!--
+          Register the pipe server with the python host.
+        -->
+        <cue name="Register_Pipe_Server" instantiate="true">
+            <conditions>
+                <event_cue_signalled cue="md.Pipe_Server_Host.Reloaded"/>
+            </conditions>
+            <actions>
+                <signal_cue_instantly cue="md.Pipe_Server_Host.Register_Module" param="'extensions/x4-simpit/pipe_external.txt'"/>
             </actions>
         </cue>
         <cue name="SimPit_Main">
@@ -56,7 +67,7 @@
                         <debug_text text="'SimPit: SimPit_writeMessages '" chance="$debugchance"/>
                         <set_value name="$data" exact="event.param3"/>
                         <debug_text text="'SimPit: $data ' + $data" chance="$debugchance"/>
-                        <signal_cue_instantly cue="md.Named_Pipes.Write" param="table[$pipe='x4_python_host', $msg=$data]"/>
+                        <signal_cue_instantly cue="md.Named_Pipes.Write" param="table[$pipe='x4simpit', $msg=$data]"/>
                     </actions>
                 </cue>
                 <!-- FIXME: this triggers _very often_ on /reloadui - why?? -->
@@ -161,7 +172,7 @@
         </cue>
         <library name="Actions_On_Reload">
             <actions>
-                <set_value name="$Pipe_Name" exact="'x4_python_host'"/>
+                <set_value name="$Pipe_Name" exact="'x4simpit'"/>
             </actions>
         </library>
         <library name="Actions_On_Connect">

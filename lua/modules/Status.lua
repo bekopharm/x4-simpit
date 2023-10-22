@@ -153,7 +153,7 @@ function L.get()
     local angle = 0
     local travelMode = false
 
-    -- local toJSON = require ("extensions.simpit.lua.vendor.lunajson.encoder")()
+    -- local toJSON = require ("extensions.x4-simpit.lua.vendor.lunajson.encoder")()
 
     --[[
         What's the difference between GetPlayerControlledShipID and GetPlayerOccupiedShipID ??? 
@@ -297,7 +297,7 @@ function L.get()
 
         -- log("SimPit: Engine status " ..tostring(engineStatus))
 
-        -- Has Lat Long - we always do in X4, more or less
+        -- Has Lat Long - we always do in X4
         flags = flags + 2097152
 
     end
@@ -436,7 +436,7 @@ function L.get()
         Pos = pos,
         -- FIXME: Implement IllegalCargo
         LegalState = LegalState.Clean,
-        Speed = manualSpeedPerSecond,
+        Speed = tostring(manualSpeedPerSecond),
         Oxygen = curOxygen / 100,
         Health = curPlayerHull / 100,
         Shield = curPlayerShield / 100,

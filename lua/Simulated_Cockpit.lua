@@ -73,7 +73,7 @@ function SimPit.new()
         end
         return true
     end
-    local toJSON = require ("extensions.simpit.lua.vendor.lunajson.encoder")()
+    local toJSON = require ("extensions.x4-simpit.lua.vendor.lunajson.encoder")()
     local function format(data)
         if data == nil then
             return "null"
@@ -98,7 +98,7 @@ function SimPit.new()
             return
         end
 
-        local Module = require("extensions.simpit.lua.modules." ..mod)
+        local Module = require("extensions.x4-simpit.lua.modules." ..mod)
 
         if Module ~= nil then
             local data = Module.get()

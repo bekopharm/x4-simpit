@@ -11,8 +11,8 @@ isDevelopment = False
 dataOutputFilename = "x4_simpit.json"
 
 # pipe names
-pipeInName = 'x4_python_client'
-pipeOutName = 'x4_python_host'
+pipeInName = 'x4simpit'
+pipeOutName = 'x4simpit_out'
 
 def main(args):
 

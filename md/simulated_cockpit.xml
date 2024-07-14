@@ -173,6 +173,8 @@
         <library name="Actions_On_Reload">
             <actions>
                 <set_value name="$Pipe_Name" exact="'x4simpit'"/>
+                <signal_cue cue="$Start_Reading"/>
+                <set_value name="$server_connected" exact="0"/>
             </actions>
         </library>
         <library name="Actions_On_Connect">
@@ -182,7 +184,10 @@
         </library>
         <library name="Actions_On_Read">
             <actions>
-                <debug_text text="'SimPit: Received message: %s.'.[event.param]" chance="$debugchance" filter="general"/>
+                <!-- Someone send us something => we assume we're connect -->
+                <set_value name="$server_connected" exact="1"/>
+                <debug_text text="'SimPit: Received message: %s.'.[event.param]" chance="$DebugChance" filter="general"/>
+                <raise_lua_event name="'simPit.read'" param="event.param"/>
             </actions>
         </library>
     </cues>

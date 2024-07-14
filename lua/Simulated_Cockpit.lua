@@ -40,7 +40,7 @@ function SimPit.new()
     cache = {}
     
     -- public variables
-    self._VERSION = 0.1
+    self._VERSION = 0.2
     
     -- private functions
     local function equals(o1, o2, ignore_mt)
@@ -124,7 +124,13 @@ function SimPit.new()
             end
         end
     end
-    
+
+    -- basically a backchannel to request something from
+    function self.read(_, message)
+        -- 
+        DebugError('Simulated_Cockpit.lua: Received Message ' ..message)
+    end
+
     return self
 end
 
@@ -133,6 +139,7 @@ local simPit = SimPit.new()
 local function init()
     DebugError("Simulated_Cockpit.lua: INIT " ..simPit._VERSION)
     RegisterEvent("simPit.get", simPit.get)
+    RegisterEvent("simPit.read", simPit.read)
 end
 
 init()

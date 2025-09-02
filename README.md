@@ -90,4 +90,4 @@ This does not affect game saves so any former saves *should* be fine (the **modi
 
 Have some ideas how this may look:
 
-> ./X4 -nosoundthrottle -nocputhrottle -skipintro -debug scripts -logfile debuglog.txt -scriptlogfile scriptlog.txt
+> ./X4 -nosoundthrottle -nocputhrottle -skipintro -debug scripts -logfile debuglog.txt -scriptlogfiles

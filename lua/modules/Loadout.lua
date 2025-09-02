@@ -61,6 +61,11 @@ ffi.cdef[[
     UniverseID GetPlayerControlledShipID(void);
     const char* GetObjectIDCode(UniverseID objectid);
     const char* GetComponentClass(UniverseID componentid);
+    uint32_t GetNumCountermeasures();
+    bool CanHaveCountermeasures();
+    const char* GetComponentHUDIcon(const UniverseID componentid);
+	const char* GetComponentIcon(const UniverseID componentid);
+    const char* GetFactionNameForTargetMonitorHack(UniverseID componentid);
 ]]
 
 local L = {
@@ -71,6 +76,7 @@ local function log(message)
     if L.debug then DebugError("[SimPit][Loadout] " ..message) end
 end
 
+-- FIXME: on load this isn't executed or executed to early so nothing is sent because player is not yet in a ship
 function L.get()
     local playersector = C.GetContextByClass(C.GetPlayerID(), "sector", false)
     local player = {
@@ -83,15 +89,36 @@ function L.get()
 
     local UniverseID = ConvertStringTo64Bit(tostring(ship_id))
 
-    hullPercent, shieldPercent, shipName = GetComponentData(UniverseID, "hullpercent", "shieldpercent", "name")
-    local ship_class = ffi.string(C.GetComponentClass(UniverseID))
-    log("Hull: " ..tostring(hullPercent) .."% Shield: " ..tostring(shieldPercent) .."% shipName: " ..tostring(shipName) .. " shipClass: "..ship_class)
+    -- factionName     = ffi.string(C.GetFactionNameForTargetMonitorHack(UniverseID))
+    -- log("faction: " ..factionName)
+
+    local ship_class, hullPercent, shieldPercent, shipName, rawShipName = GetComponentData(UniverseID, "macro", "hullpercent", "shieldpercent", "name", "rawname")
+    
+    -- local ship_class = ffi.string(C.GetComponentClass(UniverseID))
+    -- oddly enough the icon has more information on the ship type - using that maybe?
+    -- ship_class = ship_class.."_"..ffi.string(C.GetComponentIcon(UniverseID))
+
+    -- remove the brackets and comma of e.g. {888888,10105} so we end up with something like ship_arg_s_scout_01_a_macro_888888_10101
+    -- ship_class = ship_class.."_" .. string.gsub(string.sub(rawShipName, 2, -2), ',', '_')
+
+
+    log("macro: " .. ship_class .. " Hull: " ..tostring(hullPercent) .."% Shield: " ..tostring(shieldPercent) .."% shipName: " ..tostring(shipName) .. " shipClass: "..ship_class)
 
     local storagearray = GetStorageData(UniverseID)
     cargo_capacity = storagearray.capacity
 
     local loadout = C.GetCurrentLoadoutStatistics3(UniverseID)
     hullValue = loadout.HullValue or 0
+
+    -- TODO: find out how Elite lists this in Modules of Loadout
+    -- https://elite-journal.readthedocs.io/en/latest/Startup/#loadout
+    local countermeasureCapacity = loadout.CountermeasureCapacity or 0
+    local numCountermeasures = 0
+    if C.CanHaveCountermeasures() then
+        numCountermeasures = tonumber(C.GetNumCountermeasures()) or 0
+    end
+    log("Countermeasures " ..tostring(numCountermeasures) .."/" ..tostring(countermeasureCapacity))
+
 
     buf = ffi.new("UIShipMod")
     hasinstalledmod = C.GetInstalledShipMod(UniverseID, buf)
@@ -105,6 +132,9 @@ function L.get()
     player.credits = GetPlayerMoney()
     player.playersector = ffi.string(C.GetComponentName(playersector))
 
+    log("Sending Loadout event")
+
+    -- TODO: there's a lot missing like Docked, StationName and StationType. See `Docked.lua`
     -- https://elite-journal.readthedocs.io/en/latest/Startup/#loadout
     return {
         event = "Loadout",
@@ -114,15 +144,17 @@ function L.get()
         ShipIdent = target_formatted, --user-defined ship ID string
         HullValue = hullValue, --may not always be present
         ModulesValue = 0, --may not always be present
-        HullHealth = hullPercent,
-        ShieldHealth = shieldPercent,
+        HullHealth = hullPercent / 100,
+        ShieldHealth = shieldPercent / 100,
         UnladenMass = hullValue, --TODO: Mass of Hull and Modules, excludes fuel and cargo
         FuelCapacity = { Main = 0 , Reserve = 0 },
         CargoCapacity = cargo_capacity,
         MaxJumpRange = 0, --based on zero cargo, and just enough fuel for 1 jump
         Rebuy = 0,
         Hot = 0, --if wanted at startup – may not always be present)
-        Modules = {},
+        Modules = {
+            { Slot = "TinyHardpoint1", Item = "hpt_plasmapointdefence_turret_tiny", On = 1, Priority = 0, AmmoInClip = numCountermeasures, MaxAmmoInClip = countermeasureCapacity, AmmoInHopper = 0, Health = 1.000000, Value = 0}
+        },
     };
 end
 

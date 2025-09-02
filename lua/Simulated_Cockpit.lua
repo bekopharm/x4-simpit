@@ -40,7 +40,7 @@ function SimPit.new()
     cache = {}
     
     -- public variables
-    self._VERSION = 0.2
+    self._VERSION = 0.3
     
     -- private functions
     local function equals(o1, o2, ignore_mt)
@@ -91,8 +91,15 @@ function SimPit.new()
     end
 
     -- public functions
-    function self.get(_, mod)
+    function self.get(_, params)
+        local mod, modParam = string.match(params, "(.+);(.+)")
         -- DebugError("Simulated_Cockpit.lua: Gathering data " ..mod or self._VERSION)
+
+        if modParam == nil then
+            mod = params
+        else
+            DebugError("Simulated_Cockpit.lua: Got extra param" ..tostring(modParam))
+        end
 
         if mod == nil then
             DebugError("Simulated_Cockpit.lua: Missing parameter mod")
@@ -102,17 +109,21 @@ function SimPit.new()
         local Module = require("extensions.x4-simpit.lua.modules." ..mod)
 
         if Module ~= nil then
-            local data = Module.get()
+            local data = Module.get(modParam)
             local cache_hit = equals(cache[mod], data, true)
 
             -- debug:
             -- cache_hit = false
 
-            -- cache data and only write if something changed
+            -- cache data and only write if something changed, reduce log spam from Status
             if cache_hit then
-                DebugError("Simulated_Cockpit.lua: " ..mod .." cache hit")
+                if mod ~= "Status" then
+                    DebugError("Simulated_Cockpit.lua: " ..mod .." cache hit")
+                end
             else
-                DebugError("Simulated_Cockpit.lua: " ..mod .." cache missed")
+                if mod ~= "Status" then
+                    DebugError("Simulated_Cockpit.lua: " ..mod .." cache missed")
+                end
                 cache[mod] = shallow_copy(data)
                 -- FIXME: apparently write does write everything from a single event
                 -- loop to the pipe and writing several datasets in the same loop

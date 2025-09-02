@@ -71,8 +71,11 @@ ffi.cdef[[
 	} UISystemInfoCounts;
     bool IsFullscreenMenuDisplayed(bool anymenu, const char* menuname);
     float GetDistanceBetween(UniverseID component1id, UniverseID component2id);
-
+	float GetBoostEnergyPercentage(void);
 ]]
+
+-- TODO: Investigate C.CanHaveCountermeasures and C.GetNumCountermeasures() 
+-- see "crosshair handling.lua"
 
 function enum(tbl)
     local length = #tbl
@@ -153,6 +156,9 @@ function L.get()
     local angle = 0
     local travelMode = false
 
+    local boostEnergyPercentage = 0
+    local isBoosting = false
+
     -- local toJSON = require ("extensions.x4-simpit.lua.vendor.lunajson.encoder")()
 
     --[[
@@ -224,9 +230,14 @@ function L.get()
         -- LightsOn / X4 has always lights on
         flags = flags + 256
 
-	    -- speed is always returned between -1 and 1 (1 meaning full forward speed, -1 meaning full reverse speed)
+	    -- speed is always returned between - and 1 (1 meaning full forward speed, -1 meaning full reverse speed)
 	    local actualSpeed, targetedSpeed, actualSpeedPerSecond, boosting, _travelMode, matchSpeed, targetSpeed, normalTargetSpeed = GetPlayerSpeed()
         manualSpeedPerSecond = actualSpeedPerSecond
+
+        isBoosting = boosting
+        -- log("SimPit: Boosting status " ..tostring(boosting))
+        boostEnergyPercentage = C.GetBoostEnergyPercentage()
+        -- log("SimPit: Boost energy " ..tostring(boostEnergyPercentage))
 
         travelMode = _travelMode
 
@@ -295,6 +306,16 @@ function L.get()
             flags = flags + 131072
         end
 
+        if boostEnergyPercentage == 0 then
+            flags = flags + 65536
+        elseif boostEnergyPercentage > 0 and boostEnergyPercentage < 100 then
+            flags = flags + 131072
+        end
+
+        if isBoosting then
+            flags = flags + 1073741824
+        end
+
         -- log("SimPit: Engine status " ..tostring(engineStatus))
 
         -- Has Lat Long - we always do in X4
@@ -302,10 +323,6 @@ function L.get()
 
     end
 
-
-    if boosting then 
-
-    end
     -- HasJumpDrive()
 
     -- Supercruise

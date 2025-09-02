@@ -108,7 +108,7 @@ function L.get()
     local shieldPercent = 0
     local hullPercent = 0
     local factionName= ""
-    local legalStatus = LegalState.Clean
+    local legalStatus = LegalState[LegalState.Clean]
     local bounty = ""
     local power = ""
 
@@ -116,20 +116,29 @@ function L.get()
     target_formatted = ""
     local isShip = false
     local pilot_id = nil
+    local macro = ""
 
-    if target_id ~= nil then
+    if target_id ~= nil  then
+        macro = GetComponentData(target_id, "macro")
+        log("macro: " ..tostring(macro))
+
         pilot_id = GetComponentData(target_id, "controlentity")
         isShip = C.IsShip(target_id)
+
         -- target_formatted = string.format(" (%s)", ffi.string(C.GetObjectIDCode(ConvertIDTo64Bit(target_id))))
         target_formatted = ffi.string(C.GetObjectIDCode(ConvertIDTo64Bit(target_id)))
+
         log("Target " ..target_formatted .."; isShip " ..tostring(isShip))
 
         -- ANY components
         shipName, uiname, description, owner, ownername, ownershortname, ownericon, size, scanStage, isfriend, isenemy = GetComponentData(target_id, "name", "uiname", "description", "image", "owner", "ownername", "ownershortname", "ownericon", "size", "revealpercent", "isfriend", "isenemy")
-        log("" ..shipName .." uiname " ..uiname .." "..description .." " ..tostring(owner) .." " ..tostring(ownername) .." ownershortname " ..ownershortname .." ownericon " ..ownericon .." ownername " ..ownername)
+        ownername = ownername or ""
+        log("shipName: " ..shipName .." uiname " ..uiname .." "..description .." " ..tostring(owner) .." ownershortname " ..ownershortname .." ownericon " ..ownericon .." ownername " ..ownername)
+        description = description or ""
         shipName = string.format(shipName .." (%s)", target_formatted)
+
         factionName = ownershortname
-        power = ownericon
+        power = ownername
 
         -- 1: factionID: scaleplate factionName: Scale Plate Pact factionIcon: faction_scaleplate
         local owner_details = C.GetOwnerDetails(ConvertIDTo64Bit(target_id))
@@ -138,8 +147,8 @@ function L.get()
         -- FIXME: wantedmoney seems to be always "empty" on a ship? And nil on it's piloting entity??
         local wantedmoney = GetComponentData(target_id, "wantedmoney")
         if wantedmoney ~= nil then
-            bounty = ConvertMoneyString(GetComponentData(target_id, "wantedmoney"))
-            if bounty ~= "" then legalStatus = LegalState.Wanted end
+            bounty = ConvertMoneyString(wantedmoney)
+            if wantedmoney > 0 then legalStatus = LegalState[LegalState.Wanted] end
         end
         log("Legal status: " ..legalStatus .. " bounty " ..tostring(bounty))
 
@@ -163,18 +172,18 @@ function L.get()
             Example yielded "65" on a Raider, not sure how to map this but
             we can probably just apply math
         ]]--
-        skills = C.GetEntityCombinedSkill(ConvertIDTo64Bit(pilot_id), nil, "aipilot") or 0
-        pilotRank = math.floor(skills / 10)
-        if pilotRank > CombatRanks.Elite then pilotRank = CombatRanks.Elite end
+        skills = C.GetEntityCombinedSkill(ConvertIDTo64Bit(pilot_id), nil, "aipilot")
+        skills = skills or 0
+        pilotRank = CombatRanks[(math.ceil(skills / 10))]
 
         -- rank… like officer
         local typestring = GetComponentData(pilot_id, "typestring")
-        log("typestring: " ..tostring(typestring) .. " skills" ..tostring(skills))
+        log("typestring: " ..typestring .. " skills " ..skills .." ranked as: "..pilotRank)
     end
 
     -- seems to work always?
-    hullPercent, shieldPercent = GetComponentData(target_id, "hullpercent", "shieldpercent", "skills", "typestring")
-    log("Hull: " ..tostring(hullPercent) .."% Shield: " ..tostring(shieldPercent) .."%")
+    -- hullPercent, shieldPercent = GetComponentData(target_id, "hullpercent", "shieldpercent")
+    -- log("Hull: " ..tostring(hullPercent) .."% Shield: " ..tostring(shieldPercent) .."%")
 
 
     if isShip then
@@ -182,27 +191,36 @@ function L.get()
         -- isfriend: FLOAT!
         log("Size " ..size .." Scan: " ..scanStage .."% Friend: " ..tostring(isfriend) .." Enemy: " ..tostring(isenemy))
 
-        if isfriend == 0 then legalStatus = LegalState.Hostile end
+        if isenemy then 
+            legalStatus = LegalState[LegalState.Hostile]
+        end
+
+        if isfriend == 100 then
+            legalStatus = LegalState[LegalState.Clean]
+        end
         -- criminal transports
         if size == "faction_criminal" or size == "faction_scaleplate" then 
-            legalStatus = LegalState.Wanted
+            legalStatus = LegalState[LegalState.Wanted]
             -- TODO: check if this is always 500 or where to obtain data
             -- observed value from killing a criminal transport vessel
             bounty = "500"
         end
 
-        hullPercent, shieldPercent, skills, typestring = GetComponentData(target_id, "hullpercent", "shieldpercent", "skills", "typestring")
-        log("Hull: " ..tostring(hullPercent) .."% Shield: " ..tostring(shieldPercent) .."% Skill: " ..tostring(skills) .." typestring" ..tostring(typestring))
+        hullPercent, shieldPercent = GetComponentData(target_id, "hullpercent", "shieldpercent")
+        log("Hull: " ..tostring(hullPercent) .."% Shield: " ..tostring(shieldPercent) .."%")
 
-        -- local macro = GetComponentData(target_id, "macro")
-        -- log("macro: " ..tostring(macro))
+
     
     end
+
+    
 
     return {
         event = "ShipTargeted",
         TargetLocked = targetLock,
-        Ship = shipName,
+        Ship = macro,
+        Ship_Localised = shipName,
+        Description = description,
         -- scan stage >=1
         ScanStage = scanStage,
         PilotName = pilotName,

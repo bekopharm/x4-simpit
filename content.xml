@@ -2,9 +2,9 @@
 <content id="x4-simpit"
          name="Simulated Cockpit Telemetry"
          author="BekoPharm"
-         version="1"
+         version="03"
          license="MIT"
-         date="2023-03-27"
+         date="2025-09-02"
          save="false"
          enabled="1"
          description="Get ship telemetry data to connect to your home cockpit">

@@ -2,7 +2,34 @@
 
 Simulated Cockpit Telemetry: Get ship telemetry data from X4: Foundations to connect to your home cockpit.
 
-This collects data from X4: Foundations and converts it to a format similar to the well known Elite Dangerous Status as described on https://elite-journal.readthedocs.io/en/latest/Status%20File/ 
+This collects data from X4: Foundations and converts it to a format similar to the well known Elite Dangerous Status as described on https://elite-journal.readthedocs.io/en/latest/Status%20File/
+
+This is an example how this may look:
+
+```json
+{
+  "Cargo": 6,
+  "BodyName": "Pious Mists b",
+  "Balance": 6862,
+  "Fuel": { "FuelReservoir": 0, "FuelMain": 0 },
+  "Speed": "0",
+  "GuiFocus": 1,
+  "event": "Status",
+  "Shield": 1,
+  "timestamp": "2025-09-02T20:25:40Z",
+  "Flags": 35782984,
+  "Pips": [4, 4, 4],
+  "LegalState": 1,
+  "Latitude": -17804.005859375,
+  "Longitude": 150680.34375,
+  "Altitude": -3178,
+  "Heading": -58,
+  "Pos": [-17804.005859375, -3177.6904296875, 150680.34375],
+  "Oxygen": 1,
+  "Health": 1,
+  "FireGroup": 1
+}
+```
 
 The following events are (to some extend) implemented:
 
@@ -10,6 +37,11 @@ The following events are (to some extend) implemented:
 * [Commander](https://elite-journal.readthedocs.io/en/latest/Startup/#commander)
 * [Loadout](https://elite-journal.readthedocs.io/en/latest/Startup/#loadout)
 * [ShipTargeted](https://elite-journal.readthedocs.io/en/latest/Combat/#shiptargetted)
+* [Docked](https://elite-journal.readthedocs.io/en/latest/Travel.html#docked)
+* [Undocked](https://elite-journal.readthedocs.io/en/latest/Travel.html#undocked)
+* [UnderAttack](https://elite-journal.readthedocs.io/en/latest/Combat.html#underattack)
+* [ReceiveText](https://elite-journal.readthedocs.io/en/latest/Other%20Events.html#receivetext)
+* [Heatwarning](https://elite-journal.readthedocs.io/en/latest/Combat.html#heatwarning)
 
 I wrote this to connect X4: Foundations to my simulated home cockpit (https://SimPit.dev) to bring my status indicators and my Primary Flight Display to live when flying around in my favourite Space Pew Pew sandbox.
 
@@ -42,7 +74,7 @@ You have to download and run the additional mediator application `X4_Python_Pipe
 
 * Visit https://github.com/bvbohnen/x4-projects/releases
 * Click "Show all assets" at the bottom
-* Download `sn_x4_python_pipe_server_exe_v` ZIP
+* Download `sn_x4_python_pipe_server_exe_v1.4.zip` ZIP
 * Extract ZIP
 * Run it and _note down_ where it created the `permissions.json` file.
 * Edit that `permissions.json` file with `Editor.exe` or Notepad++ (NOT Word!) so it looks somewhat like this and _restart_ the `X4_Python_Pipe_Server` again (so it reads the file again):
@@ -55,7 +87,17 @@ You have to download and run the additional mediator application `X4_Python_Pipe
 }
 ```
 
-Make sure this is a _valid_ json file. 
+Make sure this is a _valid_ json file.
+
+Once installed:
+
+* Launch X4
+  * => Settings
+    * => Extensions
+      * => Set `Protective UI Mode` to **OFF**
+      * => Set `Mod Support API` to **ON**
+      * => Set `Simulated Cockpit Telemetry` to **ON**
+* Start/load a game (mods will not be loaded before)
 
 The pipe should become available on `\\.\pipe\x4simpit'` when loading a savegame in X4 from this point on.
 
@@ -63,16 +105,23 @@ The pipe should become available on `\\.\pipe\x4simpit'` when loading a savegame
 
 Check out my `linux-compat` branch of the `SirNukes Mod Support APIs` extension as described here: https://github.com/bekopharm/x4-projects/wiki/Quick-manual
 
-One installed:
+Once installed:
 
-* Launch X4 _and start any savegame_ (mods will not be loaded before)
-* Open option menu
-* => Extensions Options
-* => Named Pipes API
-* => Pipe Prefix Linux
-* Enter _absolute_ path to savegame folder
+* Launch X4
+  * => Settings
+    * => Extensions
+    * => Set `Protective UI Mode` to **OFF**
+    * => Set `Mod Support API` to **ON**
+    * => Set `Simulated Cockpit Telemetry` to **ON**
+    * => Note down the absolute path your `savegames` folder as displayed in the second paragraph
+* Start/load a game (mods will not be loaded before)
+* Open Option menu (ESC)
+  * => Extensions Options
+    * => Named Pipes API
+      * => Pipe Prefix Linux
+        * => Enter _absolute_ path to savegame folder
 
-_My_ saves are under `/home/beko/.config/EgoSoft/X4/save` (GOG version) or `/home/beko/.config/EgoSoft/X4/6336528/save` (Steam version). **You have to adjust that path!**
+_My_ saves are under `/home/beko/.config/EgoSoft/X4/save` (GOG version) or `/home/beko/.config/EgoSoft/X4/6336528/save` (Steam version). **You have to adjust that path for now!** - apparently it's possible to find this out in Lua too but I didn't implement this yet.
 
 Now restart X4 and load any game again. A socket should spawn at `~/.config/EgoSoft/X4/save/x4simpit.xml`. You can quickly test if it starts spamming data using netcat: 
 

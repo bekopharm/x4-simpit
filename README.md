@@ -119,11 +119,11 @@ Once installed:
   * => Extensions Options
     * => Named Pipes API
       * => Pipe Prefix Linux
-        * => Enter _absolute_ path to savegame folder
+        * => Note down _absolute_ path to savegame folder
 
-_My_ saves are under `/home/beko/.config/EgoSoft/X4/save` (GOG version) or `/home/beko/.config/EgoSoft/X4/6336528/save` (Steam version). **You have to adjust that path for now!** - apparently it's possible to find this out in Lua too but I didn't implement this yet.
+_My_ saves are under `/home/beko/.config/EgoSoft/X4/save` (GOG version) or `/home/beko/.config/EgoSoft/X4/6336528/save` (Steam version). The path is automatically detected by the latest`linux-compat` branch of `SirNukes Mod Support APIs` as described above. It is no longer needed to set this manually.
 
-Now restart X4 and load any game again. A socket should spawn at `~/.config/EgoSoft/X4/save/x4simpit.xml`. You can quickly test if it starts spamming data using netcat: 
+A socket should now have spawned in your savegame folder (e.g. `~/.config/EgoSoft/X4/save/x4simpit.xml`). You can quickly test if it starts spamming data using netcat: 
 
 > nc -U ~/.config/EgoSoft/X4/save/x4simpit.xml
 

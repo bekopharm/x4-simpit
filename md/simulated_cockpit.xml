@@ -6,7 +6,8 @@
         <!--TODO:
         find out how referencing this works-->
         <library name="Lib_Simpit_Get">
-            <param name="module" default="Status" />
+            <!--<param
+            name="module" default="Status" />-->
             <actions>
                 <debug_text text="'SimPit: SimPit_Get_' + $module" chance="$DebugChance" />
                 <set_value name="$logfile" exact="'SimPit-' + md.$SystemTimeAtGamestart" />
@@ -24,10 +25,10 @@
                 <set_value name="$DebugChance" exact="100" />
                 <set_value name="$logfile" exact="'SimPit-' + md.$SystemTimeAtGamestart" />
                 <debug_to_file name="$logfile" directory="'SimPit'"
-                    text="Asking Lua_Loader to load extensions/x4-simpit/pipe_external.txt with Python Pipe Server (Windows only)"
+                    text="'Asking Lua Loader to load extensions/x4-simpit/pipe_external.txt with Python Pipe Server (Windows only)'"
                     output="true" append="true" chance="$DebugChance" />
                 <debug_text
-                    text="Asking Lua_Loader to load extensions/x4-simpit/pipe_external.txt with Python Pipe Server (Windows only)"
+                    text="'Asking Lua Loader to load extensions/x4-simpit/pipe_external.txt with Python Pipe Server (Windows only)'"
                     chance="$DebugChance" />
                 <raise_lua_event name="'Lua_Loader.Load'"
                     param="'extensions.x4-simpit.lua.Simulated_Cockpit'" />
@@ -57,9 +58,7 @@
             </conditions>
             <actions>
                 <set_value name="$DebugChance" exact="100" />
-                <debug_text
-                    text="Registering extensions/x4-simpit/pipe_external.txt with Python Pipe Server (Windows only)"
-                    chance="$DebugChance" />
+                <debug_text text="'Registering extensions/x4-simpit/pipe_external.txt with Python Pipe Server (Windows only)'"  chance="$DebugChance" />
                 <signal_cue_instantly cue="md.Pipe_Server_Host.Register_Module"
                     param="'extensions/x4-simpit/pipe_external.txt'" />
                 <reset_cue cue="this" />
@@ -223,7 +222,7 @@
                     <actions>
                         <!-- TODO: forward event.param to simPit to read the old context from there  -->
                         <debug_text text="'Player undocked: ' + event.param" chance="100" />
-                        <raise_lua_event name="'simPit.get'" param="'Undocked;'+event.param"/>
+                        <raise_lua_event name="'simPit.get'" param="'Undocked;'+event.param" />
                         <reset_cue cue="this" />
                     </actions>
                 </cue>
@@ -330,20 +329,26 @@
             <actions>
                 <set_value name="$Pipe_Name" exact="'x4simpit'" />
                 <signal_cue cue="$Start_Reading" />
-                <set_value name="$server_connected" exact="0" />
+                <set_value name="$server_connected" exact="1" />
+                <set_value name="$DebugChance" exact="100" />
+                <debug_text text="'SimPit: Received on reload'" chance="$DebugChance" />
             </actions>
         </library>
         <library name="Actions_On_Connect">
             <actions>
                 <signal_cue cue="$Start_Reading" />
+                <set_value name="$server_connected" exact="1" />
+                <set_value name="$DebugChance" exact="100" />
+                <debug_text text="'SimPit: Received on connect'" chance="$DebugChance" />
             </actions>
         </library>
         <library name="Actions_On_Read">
             <actions>
+                <set_value name="$DebugChance" exact="100" />
                 <!-- Someone send us something => we assume we're connect -->
                 <set_value name="$server_connected" exact="1" />
                 <debug_text text="'SimPit: Received message: %s.'.[event.param]"
-                    chance="$DebugChance" filter="general" />
+                    chance="$DebugChance" />
                 <raise_lua_event name="'simPit.read'" param="event.param" />
             </actions>
         </library>
